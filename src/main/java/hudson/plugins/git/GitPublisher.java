@@ -51,6 +51,8 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
 
     private boolean pushMerge;
     private boolean pushOnlyIfSuccess;
+	private boolean pushIfUnstableOrBetter;
+	private boolean failBuildOnPushFailure;
     private boolean forcePush;
     
     private List<TagToPush> tagsToPush;
@@ -65,18 +67,30 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
                         List<NoteToPush> notesToPush,
                         boolean pushOnlyIfSuccess,
                         boolean pushMerge,
-                        boolean forcePush) {
+                        boolean forcePush,
+						boolean pushIfUnstableOrBetter,
+						boolean failBuildOnPushFailure) {
         this.tagsToPush = tagsToPush;
         this.branchesToPush = branchesToPush;
         this.notesToPush = notesToPush;
         this.pushMerge = pushMerge;
         this.pushOnlyIfSuccess = pushOnlyIfSuccess;
         this.forcePush = forcePush;
+		this.pushIfUnstableOrBetter = pushIfUnstableOrBetter;
+		this.failBuildOnPushFailure = failBuildOnPushFailure;
         this.configVersion = 2L;
     }
 
     public boolean isPushOnlyIfSuccess() {
         return pushOnlyIfSuccess;
+    }
+    
+    public boolean isPushIfUnstableOrBetter() {
+        return pushIfUnstableOrBetter;
+    }
+    
+    public boolean isFailBuildOnPushFailure() {
+        return failBuildOnPushFailure;
     }
     
     public boolean isPushMerge() {
@@ -204,6 +218,10 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
             listener.getLogger().println("Build did not succeed and the project is configured to only push after a successful build, so no pushing will occur.");
             return true;
         }
+		else if (pushIfUnstableOrBetter && buildResult.isWorseThan(Result.UNSTABLE)) {
+            listener.getLogger().println("Build did not succeed and the project is configured to only push after an unstable or better build, so no pushing will occur.");
+            return true;
+		}
         else {
             EnvVars environment = build.getEnvironment(listener);
 
@@ -250,9 +268,13 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
                     }
                 } catch (FormException e) {
                     e.printStackTrace(listener.error("Failed to push merge to origin repository"));
+					if (failBuildOnPushFailure)
+						throw new AbortException("Failed to push merge to origin repository");
                     return false;
                 } catch (GitException e) {
                     e.printStackTrace(listener.error("Failed to push merge to origin repository"));
+					if (failBuildOnPushFailure)
+						throw new AbortException("Failed to push merge to origin repository");
                     return false;
                 }
             }
@@ -306,6 +328,8 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
                         push.execute();
                     } catch (GitException e) {
                         e.printStackTrace(listener.error("Failed to push tag " + tagName + " to " + targetRepo));
+						if (failBuildOnPushFailure)
+							throw new AbortException("Failed to push tag " + tagName + " to " + targetRepo);
                         return false;
                     }
                 }
@@ -342,6 +366,8 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
                         push.execute();
                     } catch (GitException e) {
                         e.printStackTrace(listener.error("Failed to push branch " + branchName + " to " + targetRepo));
+						if (failBuildOnPushFailure)
+							throw new AbortException("Failed to push branch " + branchName + " to " + targetRepo);
                         return false;
                     }
                 }
@@ -365,6 +391,8 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
 
                         if (remote == null) {
                             listener.getLogger().println("No repository found for target repo name " + targetRepo);
+							if (failBuildOnPushFailure)
+								throw new AbortException("No repository found for target repo name " + targetRepo);
                             return false;
                         }
 
@@ -386,6 +414,8 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
                         push.execute();
                     } catch (GitException e) {
                         e.printStackTrace(listener.error("Failed to add note: \n" + noteMsg  + "\n******"));
+						if (failBuildOnPushFailure)
+							throw new AbortException("Failed to add note: \n" + noteMsg  + "\n******");
                         return false;
                     }
                 }

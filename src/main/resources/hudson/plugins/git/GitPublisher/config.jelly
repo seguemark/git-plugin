@@ -17,7 +17,15 @@
     ]]></script>
     <f:entry field="pushOnlyIfSuccess"
              title="${%Push Only If Build Succeeds}">
-      <f:checkbox />
+        <f:checkbox />
+    </f:entry>
+    <f:entry field="pushIfUnstableOrBetter"
+             title="${%Push If Build Is Unstable or better}">
+        <f:checkbox />
+    </f:entry>
+    <f:entry field="failBuildOnPushFailure"
+             title="${%If the push fails, fail the build}">
+        <f:checkbox />
     </f:entry>
     <f:entry field="pushMerge"
              title="${%Merge Results}"

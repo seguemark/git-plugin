@@ -81,7 +81,7 @@ public class GitPublisherTest extends AbstractGitProject {
                 Collections.singletonList(new TagToPush("origin","foo","message",true, false)),
                 Collections.<BranchToPush>emptyList(),
                 Collections.<NoteToPush>emptyList(),
-                true, true, false) {
+                true, true, false, false, false) {
             @Override
             public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
                 run.incrementAndGet();
@@ -130,7 +130,7 @@ public class GitPublisherTest extends AbstractGitProject {
                 Collections.<TagToPush>emptyList(),
                 Collections.singletonList(new BranchToPush("origin", "integration")),
                 Collections.<NoteToPush>emptyList(),
-                true, true, false));
+                true, true, false, false, false));
 
         // create initial commit and then run the build against it:
         commitNewFile("commitFileBase");
@@ -167,7 +167,7 @@ public class GitPublisherTest extends AbstractGitProject {
                 Collections.<TagToPush>emptyList(),
                 Collections.singletonList(new BranchToPush("origin", "integration")),
                 Collections.<NoteToPush>emptyList(),
-                true, true, false));
+                true, true, false, false, false));
 
         // create initial commit and then run the build against it:
         commitNewFile("commitFileBase");
@@ -252,7 +252,7 @@ public class GitPublisherTest extends AbstractGitProject {
                 Collections.<TagToPush>emptyList(),
                 Collections.singletonList(new BranchToPush("origin", "integration")),
                 Collections.<NoteToPush>emptyList(),
-                true, true, false));
+                true, true, false, false, false));
 
         // create initial commit and then run the build against it:
         commitNewFile("commitFileBase");
@@ -341,7 +341,7 @@ public class GitPublisherTest extends AbstractGitProject {
                 Collections.<TagToPush>emptyList(),
                 Collections.singletonList(new BranchToPush("origin", "integration")),
                 Collections.<NoteToPush>emptyList(),
-                true, true, false));
+                true, true, false, false, false));
 
         // create initial commit and then run the build against it:
         commitNewFile("commitFileBase");
@@ -444,7 +444,7 @@ public class GitPublisherTest extends AbstractGitProject {
         		Collections.singletonList(new TagToPush("$TARGET_NAME", tag_name, "", false, false)),
                 Collections.singletonList(new BranchToPush("$TARGET_NAME", "$TARGET_BRANCH")),
                 Collections.singletonList(new NoteToPush("$TARGET_NAME", note_content, Constants.R_NOTES_COMMITS, false)),
-                true, false, true));
+                true, false, true, false, false));
 
         commitNewFile("commitFile");
         testGitClient.tag(tag_name, "Comment");
@@ -475,7 +475,7 @@ public class GitPublisherTest extends AbstractGitProject {
                 Collections.<TagToPush>emptyList(),
                 Collections.singletonList(new BranchToPush("origin", "otherbranch")),
                 Collections.<NoteToPush>emptyList(),
-                true, true, true);
+                true, true, true, false, false);
         project.getPublishersList().add(forcedPublisher);
 
         // Create a commit on the master branch in the test repo
@@ -522,7 +522,7 @@ public class GitPublisherTest extends AbstractGitProject {
                 Collections.<TagToPush>emptyList(),
                 Collections.singletonList(new BranchToPush("origin", "otherbranch")),
                 Collections.<NoteToPush>emptyList(),
-                true, true, false);
+                true, true, false, false, false);
         project.getPublishersList().add(unforcedPublisher);
 
         // build will attempts to merge and push to "otherbranch" in test repo.
@@ -574,7 +574,7 @@ public class GitPublisherTest extends AbstractGitProject {
           Collections.<TagToPush>emptyList(),
           Collections.singletonList(new BranchToPush("origin", "integration")),
           Collections.<NoteToPush>emptyList(),
-          true, true, false));
+          true, true, false, false, false));
 
       // create initial commit and then run the build against it:
       commitNewFile("commitFileBase");
@@ -646,13 +646,15 @@ public class GitPublisherTest extends AbstractGitProject {
                 Collections.singletonList(new TagToPush("origin", tagNameReference, tagMessageReference, false, true)),
                 Collections.singletonList(new BranchToPush("origin", envReference)),
                 Collections.singletonList(new NoteToPush("origin", noteReference, Constants.R_NOTES_COMMITS, false)),
-                true, true, true);
+                true, true, true, false, false);
         assertTrue(publisher.isForcePush());
         assertTrue(publisher.isPushBranches());
         assertTrue(publisher.isPushMerge());
         assertTrue(publisher.isPushNotes());
         assertTrue(publisher.isPushOnlyIfSuccess());
         assertTrue(publisher.isPushTags());
+		assertFalse(publisher.isPushIfUnstableOrBetter());
+		asssertFalse(publisher.isFailBuildOnPushFailure());
         project.getPublishersList().add(publisher);
 
         // create initial commit
